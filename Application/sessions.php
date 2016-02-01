@@ -1,5 +1,8 @@
 <?php
+session_start();
+	
   function authenticated_session($username) {
-    return sha1(md5($username));
+  	$salt = 'auth%';
+    return openssl_digest($username . $salt, 'sha512');
   }
 ?>

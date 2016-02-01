@@ -3,13 +3,6 @@
 # clear the screen
 clear
 
-# reset any changes in the git repo to head of master and remove untracked files and pull updates from master repo
-echo "Resetting source repository..."
-git pull https://github.com/benjholla/CompletelyDigitalClips.git master &> /dev/null
-git pull origin master
-git reset --hard
-git clean -x -f
-
 # set the application server host name in the configuration template file
 printf "\nType the domain name of this website server (ex: team1.cdc.com) followed by [ENTER]:\n"
 
@@ -38,30 +31,44 @@ read DATABASE_NAME
 
 sed -i "s/DATABASE_NAME/\$DATABASE_NAME = \"$DATABASE_NAME\";/g" config_template
 
-# set the database username in the configuration template file
+# set the read database username in the configuration template file
 printf "\nType the username of the database SQL account to connect the application server to (ex: root) followed by [ENTER]:\n"
 
-read DATABASE_USERNAME
+read DATABASE_RUSERNAME
 
-sed -i "s/DATABASE_USERNAME/\$DATABASE_USERNAME = \"$DATABASE_USERNAME\";/g" config_template
+sed -i "s/DATABASE_RUSERNAME/\$DATABASE_RUSERNAME = \"$DATABASE_RUSERNAME\";/g" config_template
 
-# set the database password in the configuration template file
+# set the read database password in the configuration template file
 printf "\nType the password of the database account to connect the application server to (ex: cdc) followed by [ENTER]:\n"
 
-read DATABASE_PASSWORD
+read DATABASE_RPASSWORD
 
-sed -i "s/DATABASE_PASSWORD/\$DATABASE_PASSWORD = \"$DATABASE_PASSWORD\";/g" config_template
+sed -i "s/DATABASE_RPASSWORD/\$DATABASE_RPASSWORD = \"$DATABASE_RPASSWORD\";/g" config_template
+
+# set the write database username in the configuration template file
+printf "\nType the username of the database SQL account to connect the application server to (ex: root) followed by [ENTER]:\n"
+
+read DATABASE_WUSERNAME
+
+sed -i "s/DATABASE_WUSERNAME/\$DATABASE_WUSERNAME = \"$DATABASE_WUSERNAME\";/g" config_template
+
+# set the write database password in the configuration template file
+printf "\nType the password of the database account to connect the application server to (ex: cdc) followed by [ENTER]:\n"
+
+read DATABASE_WPASSWORD
+
+sed -i "s/DATABASE_WPASSWORD/\$DATABASE_WPASSWORD = \"$DATABASE_WPASSWORD\";/g" config_template
 
 # replace the config.php with the generated config.php file
 rm Application/config.php
 mv config_template Application/config.php
 
 # copy and replace the file contents of the application source to the webserver directory
-sudo rm -rf /var/www/*
-sudo cp -a Application/. /var/www/
+rm -rf /var/www/*
+cp -a Application/. /var/www/
 
-sudo chmod -R 0755 /var/www/media
-sudo chown www-data:www-data /var/www/media
+chmod -R 0755 /var/www/media
+chown www-data:www-data /var/www/media
 
 # all done
 printf "\nFinished.\n"

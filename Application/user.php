@@ -1,29 +1,36 @@
 <?php
   include 'config.php';
   include 'headers.php';
+  include 'sessions.php';
 
   // open connection to the database
-  include 'opendb.php';
+  include 'readDB.php';
+  include 'writeDB.php';
 
   $userID = NULL;
   $media = $mediaDir;
-  $username = $_GET["username"];
+  $username = mysqli_escape_string($read, $_GET["username"]);
 
-  try {
-    // get clip properties
-    $userResult = mysql_query("SELECT id, email FROM users WHERE username='" . $username . "'");
+  // get clip properties
+  $stmt = $read->prepare("SELECT id, email FROM users WHERE username = ?");
+  $stmt->bind_param('s', $username);
+  $stmt->bind_result($userID, $email);
+  $stmt->execute();
 
-    if(mysql_num_rows($userResult) == 0){
-        $userID = NULL;
-    } else {
-        $userRow = mysql_fetch_row($userResult);
-        $userID = $userRow[0];
-        $email = $userRow[1];
-    }
-    
-  } catch (Exception $e) {
+  $stmt->store_result();
+
+  if($stmt->num_rows())
+  {
+    $stmt->fetch();
+      $userID-=502;
+  } 
+  else 
+  {
     $userID = NULL;
   }
+
+  $email = htmlspecialchars($email);
+  $username = htmlspecialchars($username);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -36,7 +43,7 @@
     <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
     <link rel="icon" href="/favicon.ico" type="image/x-icon">
 
-    <title>Completely Digital Clips<?php if($clip != NULL){echo " - $title";} ?></title>
+    <title>Completely Digital Clips</title>
 
     <!-- Bootstrap core CSS -->
     <link href="/static/css/bootstrap.css" rel="stylesheet">
@@ -71,12 +78,11 @@
                 <span class="icon-bar"></span>
               </button>
               <a class="navbar-brand" href="#">Completely Digital Clips</a>
-              <?php echo "<!-- Hosted by $APPLICATION_HOSTNAME -->"; ?>
             </div>
             <div class="navbar-collapse collapse">
               <ul class="nav navbar-nav">
                 <li><a href="/index.php">Home</a></li>
-                <?php if(isset($_COOKIE["PHPSESSID"])): ?> 
+                <?php if(isset($_SESSION['user'])): ?> 
                   <li><a href="/post.php">Post Video</a></li>
                   <li><a href="/logout.php">Logout</a></li>
                 <?php else: ?>
@@ -93,26 +99,35 @@
     <div class="container marketing">
       <hr class="featurette-divider">
       <center>
-      <?php if(isset($_COOKIE["PHPSESSID"])): ?>
+      <?php if(isset($_SESSION['user'])): ?>
         <h1>Account Information</h1>
         <p><b>Username: </b> <?php echo $username; ?></p>
-        <p><b>Email: </b> <?php echo $email; ?></p>
+        <?php if($_SESSION['user'] == $email):?>
+          <p><b>Email: </b> <?php echo $email; ?></p>
+        <?php endif; ?>
       <?php endif; ?>
       <?php
         if($userID){
           echo "<h1>User Videos</h1>";
           // get user videos
-          $clipsResult = mysql_query("SELECT host, title, shortname, posted, views FROM clips WHERE user='" . $userID . "' ORDER BY views DESC, posted DESC");
           $postedClips = FALSE;
-          while($clipsRow = mysql_fetch_row($clipsResult)){
+          $counter = 1;
+
+          //Query Database
+          $stmt = $read->prepare("SELECT host, title, shortname, posted, views FROM clips WHERE user = ? ORDER BY views DESC, posted DESC");
+          $stmt->bind_param('s', $userID);
+          $stmt->bind_result($host, $title, $shortname, $posted, $views);
+          $stmt->execute();  
+
+          while($stmt->fetch() and (( isset($_SESSION['id']) and isset($_SESSION['user'])) or $counter < 5 ))
+          {
             $postedClips = TRUE;
-            $host = $clipsRow[0];
-            $title = $clipsRow[1];
-            $shortname = $clipsRow[2];
-            $posted = $clipsRow[3];
-            $views = $clipsRow[4];
+            $counter++;
+            $title = htmlspecialchars($title);
+            $filename = md5($shortname . "salt");
+
             echo "<a href=\"/view.php?video=$shortname\"><h2>$title</h2></a>";
-            echo "<a href=\"/view.php?video=$shortname\"><img src=\"http://$host$media/$shortname.png\" /></a>";
+            echo "<a href=\"/view.php?video=$shortname\"><img src=\"media/$host/$filename.png\" /></a>";
             echo "<p>$views views since $posted</p><br />";
           }
           if($postedClips == FALSE){
@@ -133,3 +148,7 @@
   </body>
 </html>
 
+<?
+// close connection to the database
+include 'closedb.php';
+?>

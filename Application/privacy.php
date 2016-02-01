@@ -1,6 +1,7 @@
 <?php
   include 'config.php';
   include 'headers.php';
+  include 'sessions.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -46,12 +47,11 @@
                 <span class="icon-bar"></span>
               </button>
               <a class="navbar-brand" href="#">Completely Digital Clips</a>
-              <?php echo "<!-- Hosted by $APPLICATION_HOSTNAME -->"; ?>
             </div>
             <div class="navbar-collapse collapse">
               <ul class="nav navbar-nav">
                 <li><a href="/index.php">Home</a></li>
-                <?php if(isset($_COOKIE["PHPSESSID"])): ?>
+                <?php if(isset($_SESSION['user'])): ?>
                   <li><a href="/post.php">Post Video</a></li>
                   <li><a href="/logout.php">Logout</a></li>
                 <?php else: ?>
@@ -67,8 +67,17 @@
     <br />
     <div class="container marketing">
      <hr class="featurette-divider">
-     <h1>Privacy</h1>
-     <p>Ha! You're funny.  Privacy?  You have none, so don't expect any from us.</p>
+      <h2>Privacy Policy</h2>
+      <p>Your privacy is very important to us. Accordingly, we have developed this Policy in order for you to understand how we collect, use, communicate and disclose and make use of personal information. The following outlines our privacy policy.</p>
+        <ul>
+          <li>Before or at the time of collecting personal information, we will identify the purposes for which information is being collected.</li>
+          <li>We will collect and use of personal information solely with the objective of fulfilling those purposes specified by us and for other compatible purposes, unless we obtain the consent of the individual concerned or as required by law.   </li>
+          <li>We will only retain personal information as long as necessary for the fulfillment of those purposes. </li>
+          <li>We will collect personal information by lawful and fair means and, where appropriate, with the knowledge or consent of the individual concerned. </li>
+          <li>Personal data should be relevant to the purposes for which it is to be used, and, to the extent necessary for those purposes, should be accurate, complete, and up-to-date.</li>
+          <li>We will protect personal information by reasonable security safeguards against loss or theft, as well as unauthorized access, disclosure, copying, use or modification.</li>
+          <li>We will make readily available to customers information about our policies and practices relating to the management of personal information.</li>
+        </ul>
       <!-- FOOTER -->
       <hr class="featurette-divider">
       <footer>

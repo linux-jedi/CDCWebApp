@@ -1,35 +1,52 @@
 <?php
-
 // session utils
 include 'sessions.php';
 
-// get POST information from login form
-$email=$_POST["email"];
-$password=$_POST["password"];
-
 // open connection to the database
 include 'config.php';
-include 'opendb.php';
+include 'readDB.php';
+include 'writeDB.php';
 
-// get user data from the users table (assumes users table already exists!)
-$result = mysql_query("SELECT * FROM users WHERE email='" . $email . "'" . " AND password=" . "'" . $password . "'");
+$salt = 'salt$';
 
-// authenticate user
-$login = mysql_num_rows($result) > 0;
+// get POST information from login form
+$email=mysqli_escape_string($read, $_POST["email"]);
+$password=mysqli_escape_string($read, $_POST["password"]);
 
-if($login){
-  // set an active cookie for this username
-  setcookie("PHPSESSID", authenticated_session($email), time()+3600);
-  setcookie("user", $email, time()+3600);
-  header('Location: /index.php');
-} else {
-  // logout
-  setcookie("PHPSESSID", authenticated_session($email), time()-3600);
-  setcookie("user", $email, time()-3600);
-  header('Location: /login.php?message=Login%20Failed');
+//Hash the password
+$password = openssl_digest($password . $salt, 'sha512');
+
+//Prepare the sequel query and bind parameters
+$stmt = $read->prepare('SELECT email, password FROM users WHERE email = ? AND password = ?');
+$stmt->bind_param('ss', $email, $password);
+
+//Retrieves data from user table
+if(!($stmt->execute()))
+{
+	header('Location: /login.php?message=Login%20Failed');
+	die();
+};
+
+ $stmt->store_result();
+ 
+//Check if the password was correct
+if($stmt->num_rows())
+{
+	//Set session data
+    $_SESSION['user'] = $email;
+    $_SESSION['id'] = authenticated_session($email);
+
+	header('Location: /index.php');
+} 
+else 
+{
+	// logout
+	header('Location: /login.php?message=Incorrect%20Password');
+	session_destroy();
 }
 
 // close connection to the database
+$stmt->close();
 include 'closedb.php';
 
 ?>

@@ -1,15 +1,15 @@
 <?php
 // define application server hostname
-WEBSITE_DOMAIN_NAME
-APPLICATION_HOSTNAME
+$WEBSITE_DOMAIN_NAME = "titan.com";
+$APPLICATION_HOSTNAME = "www";
 
 // define host, database name, username, and password of SQL database
-DATABASE_IP
-DATABASE_NAME
-DATABASE_RUSERNAME
-DATABASE_RPASSWORD
-DATABASE_WUSERNAME
-DATABASE_WPASSWORD
+$DATABASE_IP = "127.0.0.1";
+$DATABASE_NAME = "application";
+$DATABASE_RUSERNAME = "ruser";
+$DATABASE_RPASSWORD = "";
+$DATABASE_WUSERNAME = "wuser";
+$DATABASE_WPASSWORD = "";
 
 // error logging
 ini_set('display_errors',1);

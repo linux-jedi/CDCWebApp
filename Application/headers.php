@@ -1,4 +1,5 @@
 <?php
+  include "config.php";
   // security header settings
-  header("X-XSS-Protection: 0");
+  echo "<!-- $APPLICATION_HOSTNAME -->";
 ?> 

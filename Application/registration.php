@@ -45,7 +45,6 @@
                 <span class="icon-bar"></span>
               </button>
               <a class="navbar-brand" href="#">Completely Digital Clips</a>
-              <?php echo "<!-- Hosted by $APPLICATION_HOSTNAME -->"; ?>
             </div>
             <div class="navbar-collapse collapse">
               <ul class="nav navbar-nav">
@@ -83,7 +82,8 @@
      <?php 
         if(isset($_GET["message"])) {
           echo "<p>Registration Failed</p>";
-          echo "<p>" . $_GET["message"] . "</p>";
+          $message = htmlspecialchars($_GET["message"]);
+          echo "<p>" . $message . "</p>";
         }
      ?>
      </font>

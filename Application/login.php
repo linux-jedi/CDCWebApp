@@ -45,7 +45,6 @@
                 <span class="icon-bar"></span>
               </button>
               <a class="navbar-brand" href="#">Completely Digital Clips</a>
-              <?php echo "<!-- Hosted by $APPLICATION_HOSTNAME -->"; ?>
             </div>
             <div class="navbar-collapse collapse">
               <ul class="nav navbar-nav">
@@ -78,7 +77,8 @@
      <br />
      <?php 
         if(isset($_GET["message"])) {
-          echo $_GET["message"]; 
+          $message = htmlspecialchars($_GET["message"]);
+          echo $message; 
         }
      ?> 
      <form name=login action="authenticate.php" method="post" onSubmit="return checkLogin();">

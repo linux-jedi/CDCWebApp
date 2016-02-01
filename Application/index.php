@@ -1,6 +1,7 @@
 <?php
   include 'config.php';
   include 'headers.php';
+  include 'sessions.php';
 
   $media = $mediaDir;
 ?>
@@ -49,13 +50,12 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
               </button>
-              <a class="navbar-brand" href="#">Completely Digital Clips</a>
-              <?php echo "<!-- Hosted by $APPLICATION_HOSTNAME -->"; ?>
+              <a class="navbar-brand" href="index.php">Completely Digital Clips</a>
             </div>
             <div class="navbar-collapse collapse">
               <ul class="nav navbar-nav">
                 <li><a href="/index.php">Home</a></li>
-                <?php if(isset($_COOKIE["PHPSESSID"])): ?> 
+                <?php if(isset($_SESSION["user"])): ?> 
                   <li><a href="/post.php">Post Video</a></li>
                   <li><a href="/logout.php">Logout</a></li>
                 <?php else: ?>
@@ -64,7 +64,7 @@
                 <?php endif; ?>
               </ul>
             </div>
-          </div>
+          </div> 
         </div>
       </div>
     </div>
@@ -76,21 +76,20 @@
         <table style="width:100%;">
         <?php
 
-        include 'opendb.php';
+        include 'readDB.php';
+        include 'writeDB.php';
 
         $N = 60;
         // get top N trending videos
-        $clipsResult = mysql_query("SELECT host, title, shortname, posted, views FROM clips ORDER BY views DESC, posted DESC LIMIT $N");
-        if(mysql_num_rows($clipsResult) > 0){
+        $stmt = $read->prepare("SELECT id, host, title, shortname, posted, views FROM clips ORDER BY views DESC, posted DESC LIMIT $N");
+        $stmt->bind_result($id,$host, $title, $shortname, $posted, $views);
+
+        if($stmt->execute()){
           $counter = 1;
           echo "<tr>";
-          while($clipsRow = mysql_fetch_row($clipsResult)){
-            $host = $clipsRow[0];
-            $title = $clipsRow[1];
-            $shortname = $clipsRow[2];
-            $posted = $clipsRow[3];
-            $views = $clipsRow[4];
-            echo "<td align=\"center\"><a href=\"/view.php?video=$shortname\"><h2>$title</h2></a><a href=\"/view.php?video=$shortname\"><img src=\"http://$host$media/$shortname.png\" /></a><p><b>$views views since <i>$posted</i></b></p></td>";
+          while($stmt->fetch()){
+            $filename = md5($shortname . "salt");
+            echo "<td align=\"center\"><a href=\"/view.php?video=$shortname\"><h2>$title</h2></a><a href=\"/view.php?video=$shortname\"><img src=\"media/$host/$filename.png\" /></a><p><b>$views views since <i>$posted</i></b></p></td>";
             if($counter == 3){
               echo "</tr><tr>";
               $counter = 1;

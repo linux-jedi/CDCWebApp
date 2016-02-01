@@ -1,46 +1,69 @@
 <?php
   include 'config.php';
   include 'headers.php';
+  include 'sessions.php';
 
 // open connection to the database
-include 'opendb.php';
+include 'readDB.php';
+include 'writeDB.php';
+
+function iterateViews($pid,$conn)
+{
+  $addView = $conn->prepare("UPDATE clips SET views=views+1 WHERE id=?");
+  $addView->bind_param('s', $pid);
+  $addView->execute();
+  $addView->close();
+}
 
 $clip = NULL;
 $media = $mediaDir;
-$shortname = $_GET["video"];
+$shortname = mysql_escape_string($_GET["video"]);
+
 
 try {
     // get clip properties
-    $clipResult = mysql_query("SELECT host, title, description, posted, user, views, extension FROM clips WHERE shortname='" . $shortname . "'");
+    $stmt = $read->prepare("SELECT id, host, title, description, posted, user, views, extension FROM clips WHERE shortname = ?");
+    $stmt->bind_param("s", $shortname);
+    $stmt->bind_result($id, $host, $title, $description, $posted, $userID, $views, $extension);
+    $stmt->execute();
+    $stmt->store_result();
 
-    if(mysql_num_rows($clipResult) == 0){
+    if($stmt->num_rows() == 0){
         $clip = NULL;
-    } else {
-        $clipRow = mysql_fetch_row($clipResult);
-        $host = $clipRow[0];
-        $shareURL = "http://$WEBSITE_DOMAIN_NAME/view.php?video=$shortname";
-        $title = $clipRow[1];
-        $description = $clipRow[2];
-        $posted = $clipRow[3];
-        $userID = $clipRow[4];
-        $views = $clipRow[5];
-        $extension = $clipRow[6];
+    } 
+    else 
+    {
+        $stmt->fetch();
+        $userID+=502;
+        $userResult = $read->prepare("SELECT username FROM users WHERE id = ?");
+        $userResult->bind_param('s', $userID);
+        $userResult->bind_result($username);
 
-        // get username
-        $userResult = mysql_query("SELECT username FROM users WHERE id='" . $userID . "'");
-        $userRow = mysql_fetch_row($userResult);
-        $username = $userRow[0];
+        if(!($userResult->execute()))
+        {
+          header("Location: /index.php");
+          die();
+        }
+
+        $userResult->fetch();
+        $userResult->close();
 
         // set the clip the filename
-        $clip = "$shortname.$extension";
+        $clip = md5($shortname. "salt") . "." . $extension;
+        $shareURL = "http://$WEBSITE_DOMAIN_NAME/view.php?video=$shortname";
 
-        // update view counter
-        mysql_query("UPDATE clips SET views=views+1 WHERE shortname='" . $shortname . "'");
     }
     
   } catch (Exception $e) {
     $clip = NULL;
   }
+  // update view counter
+  iterateViews($id, $write);
+
+  //Filter data for XSS
+  $title = htmlspecialchars($title); 
+  $description = htmlspecialchars($description); 
+  $username = htmlspecialchars($username);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -88,12 +111,11 @@ try {
                 <span class="icon-bar"></span>
               </button>
               <a class="navbar-brand" href="#">Completely Digital Clips</a>
-              <?php echo "<!-- Hosted by $APPLICATION_HOSTNAME -->"; ?>
             </div>
             <div class="navbar-collapse collapse">
               <ul class="nav navbar-nav">
                 <li><a href="/index.php">Home</a></li>
-                <?php if(isset($_COOKIE["PHPSESSID"])): ?> 
+                <?php if(isset($_SESSION['user'])): ?> 
                   <li><a href="/post.php">Post Video</a></li>
                   <li><a href="/logout.php">Logout</a></li>
                 <?php else: ?>
@@ -112,7 +134,7 @@ try {
      <center>
      <?php if($clip): ?>
      <h1><?php echo $title ?></h1>
-     <video src="<?php echo "http://$host$media/$clip" ?>" width="640" height="390" class="mejs-player" data-mejsoptions='{"alwaysShowControls": true}'></video>
+     <video src="<?php echo "media/$host/$clip" ?>" width="640" height="390" class="mejs-player" data-mejsoptions='{"alwaysShowControls": true}'></video>
      <br />
      <div style="max-width: 640px; height: 150px;">
        <div style="float: left; max-width: 420px; width: 100%; height: 100%;">
@@ -120,7 +142,7 @@ try {
        </div>
        <div style="float: left; margin-left: 20px; max-width: 200px; width: 100%;">
          <pre><b>Views: <?php echo $views ?></b></pre>
-         <pre><b>Posted by: <a href="/user.php?username=<?php echo $username ?>"><?php echo $username ?></a></b></pre>
+         <pre><b>Posted by:<a href="/user.php?username=<?php echo $username; ?>"><?php echo $username; ?></a></b></pre>
          <b>Share&nbsp;</b><input type="text" name="share" value="<?php echo $shareURL ?>" disabled><br />
        </div>
      </div>
